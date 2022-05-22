@@ -19,50 +19,47 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequiredArgsConstructor
 public class BookController {
-  private final BookRepository bookRepository;
   private final BookService bookService;
 
   @GetMapping(value = "/books")
   public String books(Model model) {
-    //Iterable<Book> books = bookRepository.findAll(Sort.by(Direction.DESC, "year"));
-    Page<Book> books = bookRepository.findAll(PageRequest.of(1, 10, Sort.by(Direction.DESC, "year")));
-
-    model.addAttribute("books", ((Page<?>) books).getContent());
-    return "book";
-  }
-
-  @GetMapping(value = "/books/{id}")
-  public String book(@PathVariable Integer id,Model model) {
-    List<Book> books = new ArrayList<>();
-    Optional<Book> mayBeBook = bookRepository.findById(id);
-
-    mayBeBook.ifPresent(books::add);
+    List<Book> books = bookService.getAll();
 
     model.addAttribute("books", books);
-    return "book";
+
+    return "books";
   }
 
-  @GetMapping(value = "/book/{title}")
-  public String bookByTitle(@PathVariable String title,Model model) {
-    //List<Book> books = bookRepository.getBookByTitle(title);
+  @GetMapping(value = "/book")
+  public String book(@RequestParam() Integer id, Model model) {
+    Book book = bookService.getById(id);
 
-//    Book exampleBook = new Book();
-//    exampleBook.setTitle(title);
-
-    List<Book> books = bookRepository.getAllBooks(title);
-    model.addAttribute("books", books);
-    return "book";
+    model.addAttribute("book", book);
+    return "bookDetails";
   }
 
-  @PostMapping(value = "/books")
-  public String create(@RequestBody Book book, Model model) {
-    Iterable<Book> books = bookRepository.findAll();
+  @GetMapping(value = "/showCreateBook")
+  public String showCreateBook() {
+    return "createBook";
+  }
 
-    model.addAttribute("books", books);
-    return "book";
+  @GetMapping(value = "/createBook")
+  public String createBook(@RequestParam String title, @RequestParam Integer year, Model model) {
+      Book book = new Book();
+      book.setTitle(title);
+      book.setYear(year);
+
+      bookService.save(book);
+
+      List<Book> books = bookService.getAll();
+
+      model.addAttribute("books", books);
+
+      return "books";
   }
 }
